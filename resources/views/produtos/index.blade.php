@@ -37,16 +37,17 @@
 @endsection
 
 @section('scripts')
-<script>
-    $(function () {
-        const tbody = $('#tabela-produtos tbody');
-        const paginacao = $('#paginacao');
-        const inputBusca = $('#input-busca');
-        const produtosPorPagina = 10;
-        let produtosFiltrados = [], paginaAtual = 1;
+    <script>
+        $(function() {
+            const tbody = $('#tabela-produtos tbody');
+            const paginacao = $('#paginacao');
+            const inputBusca = $('#input-busca');
+            const produtosPorPagina = 10;
+            let produtosFiltrados = [],
+                paginaAtual = 1;
 
-        function renderLinhaProduto(produto) {
-            return `
+            function renderLinhaProduto(produto) {
+                return `
                 <tr class="text-center align-middle">
                     <td>${produto.id}</td>
                     <td>${produto.nome}</td>
@@ -65,10 +66,10 @@
                         </a>
                     </td>
                 </tr>`;
-        }
+            }
 
-        function buscarProdutos(termo = '') {
-            tbody.html(`
+            function buscarProdutos(termo = '') {
+                tbody.html(`
                 <tr>
                     <td colspan="6" class="text-center py-4">
                         <div class="spinner-border text-primary"></div>
@@ -77,101 +78,108 @@
                 </tr>
             `);
 
-            const rota = "{{ route('produtos.list', ['termo' => '__TERMO__']) }}".replace('__TERMO__', encodeURIComponent(termo));
+                const rota = "{{ route('produtos.list', ['termo' => '__TERMO__']) }}".replace('__TERMO__',
+                    encodeURIComponent(termo));
 
-            $.get(rota, function (response) {
-                if (response.status === 'success') {
-                    produtosFiltrados = response.data;
-                    renderTabela(1);
-                } else {
-                    alertaErro('Erro', 'Erro ao buscar produtos.');
+                $.get(rota, function(response) {
+                    if (response.status === 'success') {
+                        produtosFiltrados = response.data;
+                        renderTabela(1);
+                    } else {
+                        alertaErro('Erro', 'Erro ao buscar produtos.');
+                    }
+                }).fail(() => alertaErro('Erro', 'Erro ao conectar com o servidor.'));
+            }
+
+            function renderTabela(pagina) {
+                tbody.empty();
+                paginaAtual = pagina;
+
+                if (!produtosFiltrados.length) {
+                    return tbody.html(
+                        `<tr><td colspan="6" class="text-center">Nenhum produto encontrado.</td></tr>`);
                 }
-            }).fail(() => alertaErro('Erro', 'Erro ao conectar com o servidor.'));
-        }
 
-        function renderTabela(pagina) {
-            tbody.empty();
-            paginaAtual = pagina;
+                const inicio = (pagina - 1) * produtosPorPagina;
+                const fim = inicio + produtosPorPagina;
+                const paginaAtualProdutos = produtosFiltrados.slice(inicio, fim);
 
-            if (!produtosFiltrados.length) {
-                return tbody.html(`<tr><td colspan="6" class="text-center">Nenhum produto encontrado.</td></tr>`);
+                paginaAtualProdutos.forEach(produto => {
+                    tbody.append(renderLinhaProduto(produto));
+                });
+
+                renderPaginacao(produtosFiltrados.length);
             }
 
-            const inicio = (pagina - 1) * produtosPorPagina;
-            const fim = inicio + produtosPorPagina;
-            const paginaAtualProdutos = produtosFiltrados.slice(inicio, fim);
+            function renderPaginacao(total) {
+                paginacao.empty();
+                const totalPaginas = Math.ceil(total / produtosPorPagina);
+                if (totalPaginas <= 1) return;
 
-            paginaAtualProdutos.forEach(produto => {
-                tbody.append(renderLinhaProduto(produto));
-            });
+                const maxVisiveis = 3;
+                let inicio = Math.max(1, paginaAtual - 1);
+                let fim = Math.min(totalPaginas, inicio + maxVisiveis - 1);
 
-            renderPaginacao(produtosFiltrados.length);
-        }
+                if (fim - inicio + 1 < maxVisiveis && inicio > 1) {
+                    inicio = Math.max(1, fim - maxVisiveis + 1);
+                }
 
-        function renderPaginacao(total) {
-            paginacao.empty();
-            const totalPaginas = Math.ceil(total / produtosPorPagina);
-            if (totalPaginas <= 1) return;
+                if (paginaAtual - 1 > 1 && totalPaginas > 3) {
+                    paginacao.append(
+                        `<button class="btn btn-sm btn-outline-primary mx-1" data-pagina="1">&laquo;</button>`);
+                }
 
-            const maxVisiveis = 3;
-            let inicio = Math.max(1, paginaAtual - 1);
-            let fim = Math.min(totalPaginas, inicio + maxVisiveis - 1);
+                if (inicio > 1) paginacao.append(`<span class="mx-1">...</span>`);
 
-            if (fim - inicio + 1 < maxVisiveis && inicio > 1) {
-                inicio = Math.max(1, fim - maxVisiveis + 1);
-            }
-
-            if (paginaAtual > 1) {
-                paginacao.append(`<button class="btn btn-sm btn-outline-primary mx-1" data-pagina="1">&laquo;</button>`);
-            }
-
-            if (inicio > 1) paginacao.append(`<span class="mx-1">...</span>`);
-
-            for (let i = inicio; i <= fim; i++) {
-                paginacao.append(`
+                for (let i = inicio; i <= fim; i++) {
+                    paginacao.append(`
                     <button class="btn btn-sm mx-1 ${i === paginaAtual ? 'btn-primary' : 'btn-outline-primary'}" data-pagina="${i}">${i}</button>
                 `);
+                }
+
+                if (fim < totalPaginas) paginacao.append(`<span class="mx-1">...</span>`);
+
+                if (paginaAtual + 1 < totalPaginas && totalPaginas > 3) {
+                    paginacao.append(
+                        `<button class="btn btn-sm btn-outline-primary mx-1" data-pagina="${totalPaginas}">&raquo;</button>`
+                    );
+                }
             }
 
-            if (fim < totalPaginas) paginacao.append(`<span class="mx-1">...</span>`);
+            inputBusca.on('input', function() {
+                buscarProdutos($(this).val());
+            });
 
-            if (paginaAtual < totalPaginas) {
-                paginacao.append(`<button class="btn btn-sm btn-outline-primary mx-1" data-pagina="${totalPaginas}">&raquo;</button>`);
-            }
-        }
+            $(document).on('click', '#paginacao button', function() {
+                renderTabela(parseInt($(this).data('pagina')));
+            });
 
-        inputBusca.on('input', function () {
-            buscarProdutos($(this).val());
-        });
-
-        $(document).on('click', '#paginacao button', function () {
-            renderTabela(parseInt($(this).data('pagina')));
-        });
-
-        $(document).on('click', '.btn-deletar', function () {
-            const id = $(this).data('id');
-            alertaConfirmacao('Tem certeza?', 'Essa ação não pode ser desfeita!', () => {
-                $.ajax({
-                    url: `/produtos/${id}`,
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (res) {
-                        alertaSucesso('Excluído!', res.message || 'Produto excluído com sucesso.');
-                        buscarProdutos(inputBusca.val());
-                    },
-                    error: function (xhr) {
-                        const mensagem = xhr.status === 404 ? 'Produto não encontrado.' :
-                            (xhr.responseJSON?.message || 'Erro ao excluir o produto.');
-                        alertaErro('Erro', mensagem);
-                    }
+            $(document).on('click', '.btn-deletar', function() {
+                const id = $(this).data('id');
+                alertaConfirmacao('Tem certeza?', 'Essa ação não pode ser desfeita!', () => {
+                    $.ajax({
+                        url: `/produtos/${id}`,
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(res) {
+                            alertaSucesso('Excluído!', res.message ||
+                                'Produto excluído com sucesso.');
+                            buscarProdutos(inputBusca.val());
+                        },
+                        error: function(xhr) {
+                            const mensagem = xhr.status === 404 ?
+                                'Produto não encontrado.' :
+                                (xhr.responseJSON?.message ||
+                                    'Erro ao excluir o produto.');
+                            alertaErro('Erro', mensagem);
+                        }
+                    });
                 });
             });
-        });
 
-        // Busca inicial
-        buscarProdutos();
-    });
-</script>
+            buscarProdutos();
+        });
+    </script>
 @endsection
