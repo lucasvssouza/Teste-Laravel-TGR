@@ -13,7 +13,7 @@ class ProdutoSeeder extends Seeder
             Produto::create([
                 'nome' => 'Produto ' . $i,
                 'descricao' => 'Descrição do produto ' . $i,
-                'preco' => rand(1000, 99999) / 100, // entre 10,00 e 999,99
+                'preco' => rand(1000, 99999) / 100, 
                 'quantidade' => rand(1, 200),
             ]);
         }

@@ -11,7 +11,9 @@
             <p><strong>Descrição:</strong> {{ $produto->descricao ?: '-' }}</p>
             <p><strong>Preço:</strong> R$ {{ number_format($produto->preco, 2, ',', '.') }}</p>
             <p><strong>Quantidade:</strong> {{ number_format($produto->quantidade, 0, ',', '.') }}</p>
-            <a href="{{ route('produtos.index') }}" class="btn btn-secondary btn-sm mt-3">Voltar</a>
+            <div class="col text-end">
+                <a href="{{ route('produtos.index') }}" class="btn btn-secondary btn-sm mt-3">Voltar</a>
+            </div>
         </div>
     </div>
 @endsection

@@ -28,9 +28,11 @@
             value="{{ old('quantidade', isset($produto->quantidade) ? number_format($produto->quantidade, 0, '', '.') : '') }}">
     </div>
 
-    <button type="submit" class="btn btn-primary">
-        {{ $botao  }}
-    </button>
+    <div class="col text-end">
+        <button type="submit" class="btn btn-primary">
+            {{ $botao }}
+        </button>
 
-    <a href="{{ route('produtos.index') }}" class="btn btn-secondary ms-3">Cancelar</a>
+        <a href="{{ route('produtos.index') }}" class="btn btn-secondary ms-3">Cancelar</a>
+    </div>
 </form>
